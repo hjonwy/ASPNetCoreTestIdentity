@@ -48,15 +48,13 @@ namespace ASPNetCore31.Areas.Identity.Pages.Account
         {
             [Required]
             [DataType(DataType.Text)]
-            [Display(Name = "Full name")]
-            public string Name { get; set; }
+            [Display(Name = "User Name")]
+            public string UserName { get; set; }
 
-            [Required]
             [Display(Name = "Birth Date")]
             [DataType(DataType.Date)]
             public DateTime DOB { get; set; }
 
-            [Required]
             [EmailAddress]
             [Display(Name = "Email")]
             public string Email { get; set; }
@@ -86,11 +84,11 @@ namespace ASPNetCore31.Areas.Identity.Pages.Account
             if (ModelState.IsValid)
             {
                 var user = new ApplicationUser {
-                    Name = Input.Name,
                     DOB = Input.DOB,
-                    UserName = Input.Email, 
+                    UserName = Input.UserName, 
                     Email = Input.Email
-                    };
+                };
+
                 var result = await _userManager.CreateAsync(user, Input.Password);
                 if (result.Succeeded)
                 {

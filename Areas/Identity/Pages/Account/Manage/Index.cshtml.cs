@@ -35,10 +35,9 @@ namespace ASPNetCore31.Areas.Identity.Pages.Account.Manage
         {
             [Required]
             [DataType(DataType.Text)]
-            [Display(Name = "Full name")]
-            public string Name { get; set; }
+            [Display(Name = "User name")]
+            public string UserName { get; set; }
 
-            [Required]
             [Display(Name = "Birth Date")]
             [DataType(DataType.Date)]
             public DateTime DOB { get; set; }
@@ -57,7 +56,7 @@ namespace ASPNetCore31.Areas.Identity.Pages.Account.Manage
 
             Input = new InputModel
             {
-                Name = user.Name,
+                UserName = user.UserName,
                 DOB = user.DOB,
                 PhoneNumber = phoneNumber
             };
@@ -99,10 +98,10 @@ namespace ASPNetCore31.Areas.Identity.Pages.Account.Manage
                     throw new InvalidOperationException($"Unexpected error occurred setting phone number for user with ID '{userId}'.");
                 }
             }
-            
-            if (Input.Name != user.Name)
+
+            if (Input.UserName != user.UserName)
             {
-                user.Name = Input.Name;
+                user.UserName = Input.UserName;
             }
 
             if (Input.DOB != user.DOB)
