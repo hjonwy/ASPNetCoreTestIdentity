@@ -20,17 +20,20 @@ namespace ASPNetCore31.Areas.Identity.Pages.Account
     [AllowAnonymous]
     public class RegisterModel : PageModel
     {
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
 
         public RegisterModel(
+            RoleManager<IdentityRole> roleManager,
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             ILogger<RegisterModel> logger,
             IEmailSender emailSender)
         {
+            _roleManager = roleManager;
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
@@ -50,6 +53,11 @@ namespace ASPNetCore31.Areas.Identity.Pages.Account
             [DataType(DataType.Text)]
             [Display(Name = "User Name")]
             public string UserName { get; set; }
+
+            [Required]
+            [Display(Name = "Role")]
+            [DataType(DataType.Text)]
+            public string Role { get; set; }
 
             [Display(Name = "Birth Date")]
             [DataType(DataType.Date)]
@@ -75,6 +83,7 @@ namespace ASPNetCore31.Areas.Identity.Pages.Account
         {
             ReturnUrl = returnUrl;
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+            ViewData["Roles"] = new List<string>(){"Admin", "Radiolysit", "Service"};
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
@@ -89,10 +98,35 @@ namespace ASPNetCore31.Areas.Identity.Pages.Account
                     Email = Input.Email
                 };
 
-                var result = await _userManager.CreateAsync(user, Input.Password);
-                if (result.Succeeded)
-                {
+                IdentityResult result = null;
+
+                do
+                {                   
+                    result = await _userManager.CreateAsync(user, Input.Password);
+                    if(!result.Succeeded)
+                        break;
+
                     _logger.LogInformation("User created a new account with password.");
+
+                    var role = await _roleManager.FindByNameAsync(Input.Role);
+                    if(role == null)
+                    {
+                        role = new IdentityRole(Input.Role);
+                        result = await _roleManager.CreateAsync(role);
+                        if(!result.Succeeded)
+                            break;
+
+                        _logger.LogInformation("Created a new role {0}.", Input.Role);
+                    }
+
+                    IdentityUserRole<string> userRole = new IdentityUserRole<string>();
+                    userRole.UserId = user.Id;
+                    userRole.RoleId = role.Id;
+                    result = await _userManager.AddToRoleAsync(user, Input.Role);
+                    if(!result.Succeeded)
+                        break;
+
+                    _logger.LogInformation("Added user {0} to role {1}.", Input.UserName, Input.Role);
 
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
@@ -114,10 +148,16 @@ namespace ASPNetCore31.Areas.Identity.Pages.Account
                         await _signInManager.SignInAsync(user, isPersistent: false);
                         return LocalRedirect(returnUrl);
                     }
+
                 }
-                foreach (var error in result.Errors)
+                while(false);
+
+                if(result != null)
                 {
-                    ModelState.AddModelError(string.Empty, error.Description);
+                    foreach (var error in result.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
                 }
             }
 

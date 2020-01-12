@@ -38,6 +38,11 @@ namespace ASPNetCore31.Areas.Identity.Pages.Account.Manage
             [Display(Name = "User name")]
             public string UserName { get; set; }
 
+            [Required]
+            [DataType(DataType.Text)]
+            [Display(Name = "Role")]
+            public string Role { get; set; }
+
             [Display(Name = "Birth Date")]
             [DataType(DataType.Date)]
             public DateTime DOB { get; set; }
@@ -51,6 +56,7 @@ namespace ASPNetCore31.Areas.Identity.Pages.Account.Manage
         {
             var userName = await _userManager.GetUserNameAsync(user);
             var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
+            var roles = await _userManager.GetRolesAsync(user);
 
             Username = userName;
 
@@ -58,7 +64,8 @@ namespace ASPNetCore31.Areas.Identity.Pages.Account.Manage
             {
                 UserName = user.UserName,
                 DOB = user.DOB,
-                PhoneNumber = phoneNumber
+                PhoneNumber = phoneNumber,
+                Role = roles != null && roles.Count > 0 ? roles[0]: string.Empty
             };
         }
 
